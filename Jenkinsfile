@@ -123,8 +123,8 @@ pipeline {
                     bat "tar -xzvf sisconfig-backend.tar.gz -C \"${env.NODE_APP_DIR}\""
                     bat "del sisconfig-backend.tar.gz"
                     bat "pushd \"${env.NODE_APP_DIR}\" && npm install --production && popd"
-                    bat "pm2 stop sisconfig-backend || true"
-                    bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start app.js --name sisconfig-backend || pm2 restart sisconfig-backend"
+                    bat "pm2 stop sisconfig-backend"
+                    bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start app.js --name sisconfig-backend"
 
 
                     // === Despliegue del Frontend (React.js en Tomcat local) ===
