@@ -124,12 +124,23 @@ pipeline {
         }
     }
 }
-       stage('Package Frontend') {
+      stage('Package Frontend') {
     steps {
         script {
             echo "Empaquetando el frontend..."
             powershell '''
-                Compress-Archive -Path C:\\QA\\sisconfig-frontend\\package.json, C:\\QA\\sisconfig-frontend\\node_modules, C:\\QA\\sisconfig-frontend\\src, C:\\QA\\sisconfig-frontend\\public -DestinationPath C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -Force
+                # Verifica si package.json existe, si no, lo copia manualmente
+                if (!(Test-Path "C:\\QA\\sisconfig-frontend\\package.json")) {
+                    Copy-Item "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\package.json" -Destination "C:\\QA\\sisconfig-frontend"
+                }
+
+                # Verifica nuevamente antes de comprimir
+                if (!(Test-Path "C:\\QA\\sisconfig-frontend\\package.json")) {
+                    Write-Host "Error: package.json sigue sin aparecer en C:\\QA\\sisconfig-frontend"
+                    exit 1
+                }
+
+                Compress-Archive -Path C:\\QA\\sisconfig-frontend\\* -DestinationPath C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -Force
             '''
         }
     }
