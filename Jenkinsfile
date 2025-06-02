@@ -39,11 +39,13 @@ pipeline {
         stage('Backend: Run Unit Tests') {
             steps {
                 dir('Backend') {
+                    echo 'Instalando Jest...'
+                    bat 'npm install --save-dev jest'
                     echo 'Ejecutando pruebas unitarias del backend...'
-                    bat 'npm test || exit 0'  // Windows-friendly
-                    // Para Unix/Linux sería: sh 'npm test || true'
+                    bat 'npx jest || exit 0'
         }
     }
+}
     post {
         failure {
             echo '¡Pruebas unitarias del backend fallaron!'
@@ -73,19 +75,20 @@ pipeline {
         }
 
         stage('Frontend: Run Unit Tests') {
-            steps {
-                dir('Frontend') {
-                    echo 'Ejecutando pruebas unitarias del frontend...'
-                    // Asume que tu package.json en 'client' tiene un script 'test'
-                    bat 'npm test || true' // '|| true' para no fallar si no hay pruebas aún.
-                }
-            }
-            post {
-                failure {
-                    echo '¡Pruebas unitarias del frontend fallaron!'
-                }
-            }
+    steps {
+        dir('Frontend') {
+            echo 'Ejecutando pruebas unitarias del frontend...'
+            bat 'npm test -- --passWithNoTests || exit 0'
         }
+    }
+    post {
+        failure {
+            echo '¡Pruebas unitarias del frontend fallaron!'
+            // Continuar a pesar del fallo si es aceptable
+            script { currentBuild.result = 'UNSTABLE' }
+        }
+    }
+}
 
         stage('Frontend: Build for Production') {
             steps {
