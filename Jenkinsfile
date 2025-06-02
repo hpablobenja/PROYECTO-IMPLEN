@@ -124,17 +124,17 @@ pipeline {
         }
     }
 }
-        stage('Package Frontend') {
+       stage('Package Frontend') {
     steps {
         script {
             echo "Empaquetando el frontend..."
-            bat '''
-                cd C:\\QA\\sisconfig-frontend
-                tar -cvzf C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.tar.gz package.json node_modules src public
+            powershell '''
+                Compress-Archive -Path C:\\QA\\sisconfig-frontend\\* -DestinationPath C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip
             '''
         }
     }
 }
+
 
        stage('Deploy to Local QA') {
     steps {
@@ -161,9 +161,9 @@ pipeline {
 
             // === Despliegue del Frontend (React en local) ===
             echo "Preparando despliegue del frontend en QA local..."
-            bat '''
+            powershell '''
                 mkdir C:\\QA\\sisconfig-frontend
-                tar -xvzf C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.tar.gz -C C:\\QA\\sisconfig-frontend
+                 Expand-Archive -Path C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -DestinationPath C:\\QA\\sisconfig-frontend
                 
                 if not exist C:\\QA\\sisconfig-frontend\\package.json (
                     echo "Error: package.json no encontrado, copiándolo manualmente..."
