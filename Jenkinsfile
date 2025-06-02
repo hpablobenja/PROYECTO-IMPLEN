@@ -170,10 +170,10 @@ pipeline {
                     copy C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\package.json C:\\QA\\sisconfig-frontend\\
                 )
                 
-                if not exist C:\\QA\\sisconfig-frontend\\package.json (
-                    echo "Error: package.json sigue sin aparecer en el frontend"
+                if (!(Test-Path C:\\QA\\sisconfig-frontend\\package.json)) {
+                    Write-Host "Error: package.json sigue sin aparecer después de la extracción"
                     exit 1
-                )
+                }
 
             '''
         }
