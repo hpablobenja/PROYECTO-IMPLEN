@@ -131,7 +131,7 @@ pipeline {
 
                     // === Despliegue del Backend (Node.js) ===
                     echo "Preparando despliegue del backend en QA..."
-                    sshagent(credentials: ["${env.SSH_CREDENTIAL_ID}"]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ssh-qa-server-key', keyFileVariable: 'SSH_KEY')]) {
                         // Crear/limpiar directorio de la aplicación en QA
                         bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.NODE_APP_DIR} && mkdir -p ${env.NODE_APP_DIR}'"
                         // Transferir el paquete del backend
@@ -148,7 +148,7 @@ pipeline {
 
                     // === Despliegue del Frontend (React.js en Tomcat) ===
                     echo "Preparando despliegue del frontend en Tomcat en QA..."
-                    sshagent(credentials: ["${env.SSH_CREDENTIAL_ID}"]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ssh-qa-server-key', keyFileVariable: 'SSH_KEY')]) {
                         // Limpiar la aplicación antigua en Tomcat
                         bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}/*'"
                         // Crear la carpeta de la aplicación si no existe
