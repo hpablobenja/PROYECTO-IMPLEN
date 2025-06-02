@@ -24,7 +24,7 @@ pipeline {
         // Si necesitas autenticación para SSH local (ej. para PM2 con SSH), deberás revisarlo.
         SSH_CREDENTIAL_ID = 'your-ssh-credential-id' // ID de tu credencial SSH, mantenlo por si acaso.
         //    ¡DEBES REEMPLAZAR EL VALOR A CONTINUACIÓN CON LA RUTA REAL QUE ENCUENTRES!
-        PM2_PATH = 'C:\Users\BENJAMIN\AppData\Roaming\npm\pm2.cmd'
+        PM2_PATH = 'C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm\\pm2.cmd'
 
         // 2. PM2_HOME: La carpeta donde PM2 guardará sus configuraciones, logs, etc.
         //    ¡CREA ESTA CARPETA MANUALMENTE SI NO EXISTE!
