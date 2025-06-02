@@ -162,8 +162,11 @@ pipeline {
             // === Despliegue del Frontend (React en local) ===
             echo "Preparando despliegue del frontend en QA local..."
             powershell '''
-                mkdir C:\\QA\\sisconfig-frontend
-                Expand-Archive -Path C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -DestinationPath C:\\QA\\sisconfig-frontend
+                if (!(Test-Path "C:\\QA\\sisconfig-frontend")) { 
+                    New-Item -ItemType Directory -Path "C:\\QA\\sisconfig-frontend"
+                }
+
+                Expand-Archive -Path C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -DestinationPath C:\\QA\\sisconfig-frontend -Force
 
                 if (!(Test-Path "C:\\QA\\sisconfig-frontend\\package.json")) {
                     Write-Host "Error: package.json sigue sin aparecer después de la extracción"
@@ -172,7 +175,7 @@ pipeline {
             '''
         }
     }
-}     
+}
 
 stage('Run E2E Tests') {
     steps {
