@@ -26,7 +26,7 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Backend: Install Dependencies') {
             steps {
                 dir('Backend') { // Asumiendo que tu backend está en una carpeta 'server'
@@ -124,6 +124,18 @@ pipeline {
         }
     }
 }
+        stage('Package Frontend') {
+    steps {
+        script {
+            echo "Empaquetando el frontend..."
+            bat '''
+                cd C:\\QA\\sisconfig-frontend
+                tar -cvzf C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.tar.gz package.json node_modules src public
+            '''
+        }
+    }
+}
+
        stage('Deploy to Local QA') {
     steps {
         script {
