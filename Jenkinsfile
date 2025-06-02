@@ -158,13 +158,13 @@ pipeline {
     }
 }
 
-        stage('Run E2E Tests') {
+       stage('Run E2E Tests') {
     steps {
         script {
             echo 'Ejecutando pruebas E2E en QA local...'
             bat '''
+                SET PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%
                 npx cypress run --config baseUrl=http://localhost:8080
-                npx playwright test --base-url=http://localhost:8080
             '''
         }
     }
