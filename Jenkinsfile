@@ -124,58 +124,41 @@ pipeline {
         }
     }
 }
-        stage('Deploy to QA') {
-            steps {
-                script {
-                    echo 'Desplegando SISCONFIG a QA...'
+       stage('Deploy to Local QA') {
+    steps {
+        script {
+            echo 'Desplegando SISCONFIG en QA local...'
 
-                    // === Despliegue del Backend (Node.js) ===
-                    echo "Preparando despliegue del backend en QA..."
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ssh-qa-server-key', keyFileVariable: 'SSH_KEY')]) {
-                        // Crear/limpiar directorio de la aplicación en QA
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.NODE_APP_DIR} && mkdir -p ${env.NODE_APP_DIR}'"
-                        // Transferir el paquete del backend
-                        bat "scp -o StrictHostKeyChecking=no sisconfig-backend.tar.gz ${env.QA_SERVER_USER}@${env.QA_SERVER_IP}:${env.NODE_APP_DIR}/"
-                        // Descomprimir y limpiar en el servidor QA
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && tar -xzvf sisconfig-backend.tar.gz && rm sisconfig-backend.tar.gz'"
-                        // Instalar dependencias en el servidor QA (si no se empaquetaron directamente)
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && npm install --production'"
-                        // Opcional: copiar variables de entorno (.env) si las usas y no están en Git
-                        // sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cp /path/to/qa/backend/.env ${env.NODE_APP_DIR}/.env'"
-                        // Iniciar/Reiniciar el backend con PM2
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && pm2 stop sisconfig-backend || true && pm2 start app.js --name sisconfig-backend || pm2 restart sisconfig-backend'"
-                    }
+            // === Despliegue del Backend (Node.js) ===
+            echo "Preparando despliegue del backend en QA local..."
+            bat '''
+                mkdir C:\QA\sisconfig-backend
+                tar -xzvf sisconfig-backend.tar.gz -C C:\QA\sisconfig-backend
+                npm install --production --prefix C:\QA\sisconfig-backend
+                pm2 stop sisconfig-backend || true
+                pm2 start C:\QA\sisconfig-backend\app.js --name sisconfig-backend
+            '''
 
-                    // === Despliegue del Frontend (React.js en Tomcat) ===
-                    echo "Preparando despliegue del frontend en Tomcat en QA..."
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ssh-qa-server-key', keyFileVariable: 'SSH_KEY')]) {
-                        // Limpiar la aplicación antigua en Tomcat
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}/*'"
-                        // Crear la carpeta de la aplicación si no existe
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'mkdir -p ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}'"
-                        // Transferir el paquete del frontend
-                        bat "scp -o StrictHostKeyChecking=no sisconfig-frontend.tar.gz ${env.QA_SERVER_USER}@${env.QA_SERVER_IP}:${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}/"
-                        // Descomprimir y limpiar en el servidor QA
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME} && tar -xzvf sisconfig-frontend.tar.gz && rm sisconfig-frontend.tar.gz'"
-                        // Reiniciar Tomcat (esto asegura que Tomcat recargue la aplicación)
-                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'sudo systemctl restart tomcat'" // Asegúrate que el usuario tenga permisos para sudo sin password o usa otra forma de reiniciar
-                    }
-                }
-            }
+            // === Despliegue del Frontend (React en local) ===
+            echo "Preparando despliegue del frontend en QA local..."
+            bat '''
+                mkdir C:\QA\sisconfig-frontend
+                tar -xzvf sisconfig-frontend.tar.gz -C C:\QA\sisconfig-frontend
+            '''
         }
+    }
+}
 
-        stage('Run E2E Tests (Optional but Recommended)') {
-            steps {
-                script {
-                    echo 'Ejecutando pruebas E2E en QA (simulado)...'
-                    // Aquí ejecutarías tus pruebas E2E (Cypress/Playwright) contra tu ambiente de QA.
-                    // Esto podría requerir que un agente Jenkins tenga Cypress/Playwright instalado
-                    // o que dispare otro Job de Jenkins dedicado a las pruebas E2E.
-                    // sh 'npx cypress run --config baseUrl=http://tu.ip.del.servidor.qa:8080/sisconfig-frontend'
-                    // sh 'npx playwright test --base-url=http://tu.ip.del.servidor.qa:8080/sisconfig-frontend'
-                    echo 'Para ejecutar pruebas E2E reales, necesitarías configurar Cypress o Playwright y un runner.'
-                }
-            }
+        stage('Run E2E Tests') {
+    steps {
+        script {
+            echo 'Ejecutando pruebas E2E en QA local...'
+            bat '''
+                npx cypress run --config baseUrl=http://localhost:8080
+                npx playwright test --base-url=http://localhost:8080
+            '''
+        }
+    }
             post {
                 failure {
                     echo '¡Pruebas E2E fallaron en QA! Investiga el problema.'
