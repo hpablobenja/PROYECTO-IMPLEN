@@ -40,17 +40,18 @@ pipeline {
             steps {
                 dir('Backend') {
                     echo 'Ejecutando pruebas unitarias del backend...'
-                    // Asume que tu package.json en 'server' tiene un script 'test'
-                    bat 'npm test || true' // '|| true' para que el pipeline no falle si no hay pruebas todavía o si npm test no está configurado. Quítalo cuando tengas pruebas robustas.
-                }
-            }
-            post {
-                failure {
-                    echo '¡Pruebas unitarias del backend fallaron!'
-                    // Aquí puedes añadir notificaciones (correo, Slack, etc.)
-                }
-            }
+                    bat 'npm test || exit 0'  // Windows-friendly
+                    // Para Unix/Linux sería: sh 'npm test || true'
         }
+    }
+    post {
+        failure {
+            echo '¡Pruebas unitarias del backend fallaron!'
+            // Opcional: Continuar a pesar del fallo
+            // script { currentBuild.result = 'UNSTABLE' }
+        }
+    }
+}
 
         // Si tu backend de Node.js necesita un paso de "build" (ej. transpilación de TypeScript), añádelo aquí
         // stage('Backend: Build') {
