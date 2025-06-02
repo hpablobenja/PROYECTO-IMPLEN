@@ -129,7 +129,7 @@ pipeline {
         script {
             echo "Empaquetando el frontend..."
             powershell '''
-                Compress-Archive -Path C:\\QA\\sisconfig-frontend\\* -DestinationPath C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip
+                Compress-Archive -Path C:\\QA\\sisconfig-frontend\\package.json, C:\\QA\\sisconfig-frontend\\node_modules, C:\\QA\\sisconfig-frontend\\src, C:\\QA\\sisconfig-frontend\\public -DestinationPath C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -Force
             '''
         }
     }
@@ -168,6 +168,12 @@ pipeline {
 
                 Expand-Archive -Path C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -DestinationPath C:\\QA\\sisconfig-frontend -Force
 
+                # Mueve archivos si quedaron en una subcarpeta
+                if (Test-Path "C:\\QA\\sisconfig-frontend\\frontend") {
+                    Move-Item -Path "C:\\QA\\sisconfig-frontend\\frontend\\*" -Destination "C:\\QA\\sisconfig-frontend" -Force
+                    Remove-Item -Path "C:\\QA\\sisconfig-frontend\\frontend" -Recurse -Force
+                }
+
                 if (!(Test-Path "C:\\QA\\sisconfig-frontend\\package.json")) {
                     Write-Host "Error: package.json sigue sin aparecer después de la extracción"
                     exit 1
@@ -176,6 +182,7 @@ pipeline {
         }
     }
 }
+
 
 stage('Run E2E Tests') {
     steps {
