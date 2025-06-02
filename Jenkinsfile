@@ -170,7 +170,6 @@ pipeline {
                     '''
         }
     }
-}
             post {
                 failure {
                     echo '¡Pruebas E2E fallaron en QA! Investiga el problema.'
