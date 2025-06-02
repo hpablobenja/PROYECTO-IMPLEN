@@ -166,6 +166,7 @@ pipeline {
                         SET "PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%"
                         SET "CYPRESS_CACHE_FOLDER=C:\\Users\\BENJAMIN\\AppData\\Roaming\\Cypress"
                         cd C:\\QA\\sisconfig-frontend
+                        cd C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD
                         npx cypress run --config baseUrl=http://localhost:8080
                     '''
         }
