@@ -45,7 +45,7 @@ pipeline {
                     bat 'npx jest || exit 0'
         }
     }
-}
+
     post {
         failure {
             echo '¡Pruebas unitarias del backend fallaron!'
