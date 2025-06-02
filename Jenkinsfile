@@ -9,7 +9,7 @@ pipeline {
         TOMCAT_WEBAPPS_PATH = '/opt/tomcat/webapps' // Ruta donde Tomcat sirve las apps
         FRONTEND_APP_NAME = 'sisconfig-frontend' // Nombre de la carpeta para el frontend en Tomcat
         NODE_APP_DIR = '/opt/sisconfig-backend' // Directorio donde se desplegará el backend en QA
-        QA_SERVER_IP = '192.168.207.16' // IP de tu servidor QA (ej. 192.168.1.100)
+        QA_SERVER_IP = 'localhost' // IP de tu servidor QA (ej. 192.168.1.100)
         QA_SERVER_USER = 'jenkins' // Usuario SSH en tu servidor QA (debe tener permisos)
         // Asegúrate de crear una Credencial de tipo "SSH Username with private key" en Jenkins
         // y usar su ID aquí.
