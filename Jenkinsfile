@@ -158,17 +158,23 @@ pipeline {
     }
 }
 
-        stage('Run E2E Tests') {
-            steps {
-                script {
-                    echo 'Ejecutando pruebas E2E en QA local...'
-                    bat '''
-                        SET "PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%"
-                        SET "CYPRESS_CACHE_FOLDER=C:\\Users\\BENJAMIN\\AppData\\Roaming\\Cypress"
-                        cd C:\\QA\\sisconfig-frontend
-                        cd C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD
-                        npx cypress run --config baseUrl=http://localhost:8080
-                    '''
+stage('Run E2E Tests') {
+    steps {
+        script {
+            echo 'Ejecutando pruebas E2E en QA local...'
+            bat '''
+                SET "PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%"
+                SET "NODE_PATH=C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm\\node_modules"
+                SET "CYPRESS_CACHE_FOLDER=C:\\Users\\BENJAMIN\\AppData\\Roaming\\Cypress"
+                
+                cd C:\\QA\\sisconfig-frontend
+                
+                if not exist node_modules (
+                    npm install
+                )
+                
+                npx cypress run --config baseUrl=http://localhost:8080
+            '''
         }
     }
             post {
