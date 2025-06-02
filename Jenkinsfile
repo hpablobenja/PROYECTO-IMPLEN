@@ -13,7 +13,7 @@ pipeline {
         QA_SERVER_USER = 'jenkins' // Usuario SSH en tu servidor QA (debe tener permisos)
         // Asegúrate de crear una Credencial de tipo "SSH Username with private key" en Jenkins
         // y usar su ID aquí.
-        SSH_CREDENTIAL_ID = 'your-ssh-credential-id' // Reemplaza con el ID de tu credencial SSH
+        SSH_CREDENTIAL_ID = 'ssh-qa-server-key' // Reemplaza con el ID de tu credencial SSH
     }
 
     stages {
