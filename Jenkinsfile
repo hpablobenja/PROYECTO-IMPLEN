@@ -119,7 +119,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to QA') {
+                stage('Deploy to QA') {
             steps {
                 script {
                     echo 'Desplegando SISCONFIG a QA (Local)...'
@@ -131,8 +131,21 @@ pipeline {
                     bat "tar -xzvf sisconfig-backend.tar.gz -C \"${env.NODE_APP_DIR}\""
                     bat "del sisconfig-backend.tar.gz"
                     bat "pushd \"${env.NODE_APP_DIR}\" && npm install --production && popd"
-                    bat "pm2 stop sisconfig-backend"
-                    bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start app.js --name sisconfig-backend"
+
+                    // Iniciar/Reiniciar el backend con PM2
+                    // Es crucial usar el PM2_PATH completo y configurar PM2_HOME
+                    echo "Intentando eliminar proceso PM2 existente si existe..."
+                    // =======================================================================================
+                    // ¡MODIFICACIÓN CLAVE AQUÍ!
+                    // 'pm2 delete sisconfig-backend' retornará un error si el proceso no existe.
+                    // '|| exit 0' le dice a Windows (y por ende a Jenkins) que si el comando anterior falla,
+                    // que "salga con código 0" (es decir, como si hubiera sido exitoso).
+                    // Esto permite que el pipeline continúe incluso si el proceso no estaba corriendo.
+                    bat "\"${env.PM2_PATH}\" delete sisconfig-backend || exit 0"
+                    // =======================================================================================
+                    
+                    echo "Iniciando/Reiniciando PM2 sisconfig-backend..."
+                    bat "cd /D \"${env.NODE_APP_DIR}\" && \"${env.PM2_PATH}\" start app.js --name sisconfig-backend"
 
 
                     // === Despliegue del Frontend (React.js en Tomcat local) ===
