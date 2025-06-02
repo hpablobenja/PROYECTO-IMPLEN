@@ -126,25 +126,39 @@ pipeline {
 
                     // === Despliegue del Backend (Node.js) ===
                     echo "Preparando despliegue del backend en QA local..."
+
+                    // 1. PRIMERO: Detener y eliminar el proceso PM2 existente.
+                    //    Esto libera los archivos en C:\QA\sisconfig-backend.
+                    echo "Intentando detener y eliminar proceso PM2 existente si existe..."
+                    // Intentamos detenerlo limpiamente; '|| exit 0' para que no falle si no está corriendo.
+                    bat "\"${env.PM2_PATH}\" stop sisconfig-backend || exit 0"
+                    // Luego intentamos eliminarlo de la lista de PM2; '|| exit 0' para que no falle si no existe.
+                    bat "\"${env.PM2_PATH}\" delete sisconfig-backend || exit 0"
+
+                    // Opcional: Pequeña pausa para asegurar que el sistema operativo libere los archivos.
+                    // Solo si el error persiste después del reordenamiento.
+                    // bat "timeout /T 5 /NOBREAK" // Pausa de 5 segundos (solo en Windows)
+
+                    // 2. SEGUNDO: Ahora sí, eliminar el directorio de despliegue anterior.
+                    //    Como el proceso PM2 ya se intentó detener, la carpeta debería estar liberada.
+                    echo "Eliminando directorio de despliegue anterior: ${env.NODE_APP_DIR}"
                     bat "if exist \"${env.NODE_APP_DIR}\" rmdir /s /q \"${env.NODE_APP_DIR}\""
+
+                    // 3. TERCERO: Crear el nuevo directorio de despliegue.
+                    echo "Creando nuevo directorio de despliegue: ${env.NODE_APP_DIR}"
                     bat "mkdir \"${env.NODE_APP_DIR}\""
+
+                    // 4. CUARTO: Extraer el nuevo código en el directorio limpio.
+                    echo "Extrayendo nuevo código..."
                     bat "tar -xzvf sisconfig-backend.tar.gz -C \"${env.NODE_APP_DIR}\""
                     bat "del sisconfig-backend.tar.gz"
+
+                    // 5. QUINTO: Instalar las dependencias de producción en el nuevo código.
+                    echo "Instalando dependencias de producción..."
                     bat "pushd \"${env.NODE_APP_DIR}\" && npm install --production && popd"
 
-                    // Iniciar/Reiniciar el backend con PM2
-                    // Es crucial usar el PM2_PATH completo y configurar PM2_HOME
-                    echo "Intentando eliminar proceso PM2 existente si existe..."
-                    // =======================================================================================
-                    // ¡MODIFICACIÓN CLAVE AQUÍ!
-                    // 'pm2 delete sisconfig-backend' retornará un error si el proceso no existe.
-                    // '|| exit 0' le dice a Windows (y por ende a Jenkins) que si el comando anterior falla,
-                    // que "salga con código 0" (es decir, como si hubiera sido exitoso).
-                    // Esto permite que el pipeline continúe incluso si el proceso no estaba corriendo.
-                    bat "\"${env.PM2_PATH}\" delete sisconfig-backend || exit 0"
-                    // =======================================================================================
-                    
-                    echo "Iniciando/Reiniciando PM2 sisconfig-backend..."
+                    // 6. SEXTO: Iniciar la nueva versión del backend con PM2.
+                    echo "Iniciando PM2 sisconfig-backend..."
                     bat "cd /D \"${env.NODE_APP_DIR}\" && \"${env.PM2_PATH}\" start server.js --name sisconfig-backend"
 
 
@@ -156,10 +170,9 @@ pipeline {
                     bat "del sisconfig-frontend.tar.gz"
 
                     echo "¡ATENCIÓN! Reinicio de Tomcat manual o con permisos de administrador. Verifica que tu Tomcat se recargue al detectar cambios en webapps o reinícialo manualmente para probar."
-                }
             }
         }
-
+}
         stage('Run E2E Tests (Optional but Recommended)') {
             steps {
                 script {
