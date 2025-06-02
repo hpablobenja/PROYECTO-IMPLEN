@@ -132,18 +132,18 @@ pipeline {
             // === Despliegue del Backend (Node.js) ===
             echo "Preparando despliegue del backend en QA local..."
             bat '''
-                mkdir C:\QA\sisconfig-backend
-                tar -xzvf sisconfig-backend.tar.gz -C C:\QA\sisconfig-backend
-                npm install --production --prefix C:\QA\sisconfig-backend
+                mkdir C:/QA/sisconfig-backend
+                tar -xzvf sisconfig-backend.tar.gz -C C:/QA/sisconfig-backend
+                npm install --production --prefix C:/QA/sisconfig-backend
                 pm2 stop sisconfig-backend || true
-                pm2 start C:\QA\sisconfig-backend\app.js --name sisconfig-backend
+                pm2 start C:/QA/sisconfig-backend/app.js --name sisconfig-backend
             '''
 
             // === Despliegue del Frontend (React en local) ===
             echo "Preparando despliegue del frontend en QA local..."
             bat '''
-                mkdir C:\QA\sisconfig-frontend
-                tar -xzvf sisconfig-frontend.tar.gz -C C:\QA\sisconfig-frontend
+                mkdir C:/QA/sisconfig-frontend
+                tar -xzvf sisconfig-frontend.tar.gz -C C:/QA/sisconfig-frontend
             '''
         }
     }
