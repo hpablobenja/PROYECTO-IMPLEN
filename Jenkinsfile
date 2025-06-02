@@ -45,19 +45,18 @@ pipeline {
         }
 
         stage('Backend: Run Unit Tests') {
-            steps {
-                // *** CAMBIO AQUÍ: 'server' ahora es 'Backend' ***
-                dir('Backend') {
-                    echo 'Ejecutando pruebas unitarias del backend...'
-                    bat 'npm test || true'
-                }
-            }
-            post {
-                failure {
-                    echo '¡Pruebas unitarias del backend fallaron!'
-                }
-            }
+    steps {
+        dir('Backend') {
+            echo 'Ejecutando pruebas unitarias del backend...'
+            bat 'npm test' // SIN EL '|| true'
         }
+    }
+    post {
+        failure {
+            echo '¡Pruebas unitarias del backend fallaron!'
+        }
+    }
+}
 
         stage('Frontend: Install Dependencies') {
             steps {
@@ -70,20 +69,18 @@ pipeline {
         }
 
         stage('Frontend: Run Unit Tests') {
-            steps {
-                // *** CAMBIO AQUÍ: 'client' ahora es 'Frontend' ***
-                dir('Frontend') {
-                    echo 'Ejecutando pruebas unitarias del frontend...'
-                    bat 'npm test || true'
-                }
-            }
-            post {
-                failure {
-                    echo '¡Pruebas unitarias del frontend fallaron!'
-                }
-            }
+    steps {
+        dir('Frontend') {
+            echo 'Ejecutando pruebas unitarias del frontend...'
+            bat 'npm test' // SIN EL '|| true'
         }
-
+    }
+    post {
+        failure {
+            echo '¡Pruebas unitarias del frontend fallaron!'
+        }
+    }
+}
         stage('Frontend: Build for Production') {
             steps {
                 // *** CAMBIO AQUÍ: 'client' ahora es 'Frontend' ***
