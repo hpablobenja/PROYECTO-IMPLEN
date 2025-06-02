@@ -93,11 +93,22 @@ pipeline {
         stage('Frontend: Build for Production') {
             steps {
                 dir('Frontend') {
-                    echo 'Construyendo el frontend para producción (npm run build)...'
-                    bat 'npm run build' // Esto generará la carpeta 'build' dentro de 'client'
-                }
-            }
+                    echo 'Actualizando dependencias...'
+                    bat 'npx update-browserslist-db@latest'
+                    echo 'Construyendo el frontend para producción...'
+                    bat 'set CI=false && npm run build'
+                    
+                    // Opcional: Verificar si la carpeta build se creó
+                    bat 'if not exist "build" exit 1'
         }
+    }
+    post {
+        failure {
+            echo '¡Error al construir el frontend!'
+            // Puedes añadir acciones adicionales aquí
+        }
+    }
+}
 
         stage('Package Artifacts') {
             steps {
