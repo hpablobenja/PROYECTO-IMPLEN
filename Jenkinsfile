@@ -151,12 +151,18 @@ pipeline {
             echo "Preparando despliegue del frontend en QA local..."
             bat '''
                 mkdir C:\\QA\\sisconfig-frontend
-                cd C:\\QA\\sisconfig-frontend
                 tar -xvzf C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.tar.gz -C C:\\QA\\sisconfig-frontend
+                
                 if not exist C:\\QA\\sisconfig-frontend\\package.json (
-                    echo "Error: package.json no encontrado en la carpeta del frontend"
+                    echo "Error: package.json no encontrado, copiándolo manualmente..."
+                    copy C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\package.json C:\\QA\\sisconfig-frontend\\
+                )
+                
+                if not exist C:\\QA\\sisconfig-frontend\\package.json (
+                    echo "Error: package.json sigue sin aparecer en el frontend"
                     exit 1
                 )
+
             '''
         }
     }
