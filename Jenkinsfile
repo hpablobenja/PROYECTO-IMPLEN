@@ -158,14 +158,15 @@ pipeline {
     }
 }
 
-       stage('Run E2E Tests') {
-    steps {
-        script {
-            echo 'Ejecutando pruebas E2E en QA local...'
-            bat '''
-                SET PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%
-                npx cypress run --config baseUrl=http://localhost:8080
-            '''
+        stage('Run E2E Tests') {
+            steps {
+                script {
+                    echo 'Ejecutando pruebas E2E en QA local...'
+                    bat '''
+                        SET PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%
+                        SET CYPRESS_CACHE_FOLDER=C:\\Users\\BENJAMIN\\AppData\\Roaming\\Cypress
+                        npx cypress run --config baseUrl=http://localhost:8080
+                    '''
         }
     }
             post {
