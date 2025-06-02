@@ -163,22 +163,16 @@ pipeline {
             echo "Preparando despliegue del frontend en QA local..."
             powershell '''
                 mkdir C:\\QA\\sisconfig-frontend
-                 Expand-Archive -Path C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -DestinationPath C:\\QA\\sisconfig-frontend
-                
-                if (!(Test-Path C:\\QA\\sisconfig-frontend\\package.json)) {
-                    echo "Error: package.json no encontrado, copiándolo manualmente..."
-                    copy C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\package.json C:\\QA\\sisconfig-frontend\\
-                )
-                
-                if (!(Test-Path C:\\QA\\sisconfig-frontend\\package.json)) {
+                Expand-Archive -Path C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\SISCONFIG-CI-CD\\sisconfig-frontend.zip -DestinationPath C:\\QA\\sisconfig-frontend
+
+                if (!(Test-Path "C:\\QA\\sisconfig-frontend\\package.json")) {
                     Write-Host "Error: package.json sigue sin aparecer después de la extracción"
                     exit 1
                 }
-
             '''
         }
     }
-}
+}     
 
 stage('Run E2E Tests') {
     steps {
