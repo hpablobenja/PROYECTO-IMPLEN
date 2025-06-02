@@ -18,6 +18,8 @@
     "nodemon": "^2.0.21"
 },
   "devDependencies": {
-    "jest": "^29.0.0"
+    "jest": "^29.0.0",
+    "jest-mock-extended": "^4.0.0-beta1",
+    "supertest": "^7.1.1"
   }
 }
