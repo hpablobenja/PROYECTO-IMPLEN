@@ -163,12 +163,14 @@ pipeline {
                 script {
                     echo 'Ejecutando pruebas E2E en QA local...'
                     bat '''
-                        SET PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%
-                        SET CYPRESS_CACHE_FOLDER=C:\\Users\\BENJAMIN\\AppData\\Roaming\\Cypress
+                        SET "PATH=C:\\Program Files\\nodejs;C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm;%PATH%"
+                        SET "CYPRESS_CACHE_FOLDER=C:\\Users\\BENJAMIN\\AppData\\Roaming\\Cypress"
+                        cd C:\\QA\\sisconfig-frontend
                         npx cypress run --config baseUrl=http://localhost:8080
                     '''
         }
     }
+}
             post {
                 failure {
                     echo '¡Pruebas E2E fallaron en QA! Investiga el problema.'
