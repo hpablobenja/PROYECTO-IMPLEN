@@ -31,7 +31,7 @@ pipeline {
             steps {
                 dir('Backend') { // Asumiendo que tu backend está en una carpeta 'server'
                     echo 'Instalando dependencias del backend (Node.js)...'
-                    sh 'npm install'
+                    bat 'npm install'
                 }
             }
         }
@@ -41,7 +41,7 @@ pipeline {
                 dir('Backend') {
                     echo 'Ejecutando pruebas unitarias del backend...'
                     // Asume que tu package.json en 'server' tiene un script 'test'
-                    sh 'npm test || true' // '|| true' para que el pipeline no falle si no hay pruebas todavía o si npm test no está configurado. Quítalo cuando tengas pruebas robustas.
+                    bat 'npm test || true' // '|| true' para que el pipeline no falle si no hay pruebas todavía o si npm test no está configurado. Quítalo cuando tengas pruebas robustas.
                 }
             }
             post {
@@ -57,7 +57,7 @@ pipeline {
         //     steps {
         //         dir('Backend') {
         //             echo 'Construyendo el backend (si aplica)...'
-        //             sh 'npm run build'
+        //             bat 'npm run build'
         //         }
         //     }
         // }
@@ -66,7 +66,7 @@ pipeline {
             steps {
                 dir('Frontend') { // Asumiendo que tu frontend está en una carpeta 'client'
                     echo 'Instalando dependencias del frontend (React.js)...'
-                    sh 'npm install'
+                    bat 'npm install'
                 }
             }
         }
@@ -76,7 +76,7 @@ pipeline {
                 dir('Frontend') {
                     echo 'Ejecutando pruebas unitarias del frontend...'
                     // Asume que tu package.json en 'client' tiene un script 'test'
-                    sh 'npm test || true' // '|| true' para no fallar si no hay pruebas aún.
+                    bat 'npm test || true' // '|| true' para no fallar si no hay pruebas aún.
                 }
             }
             post {
@@ -90,7 +90,7 @@ pipeline {
             steps {
                 dir('Frontend') {
                     echo 'Construyendo el frontend para producción (npm run build)...'
-                    sh 'npm run build' // Esto generará la carpeta 'build' dentro de 'client'
+                    bat 'npm run build' // Esto generará la carpeta 'build' dentro de 'client'
                 }
             }
         }
@@ -101,10 +101,10 @@ pipeline {
                     echo 'Empaquetando artefactos para despliegue...'
                     // Empaquetar el backend (Node.js)
                     // Comprime todo el contenido de la carpeta 'server'
-                    sh "tar -czvf sisconfig-backend.tar.gz -C server ."
+                    bat "tar -czvf sisconfig-backend.tar.gz -C server ."
                     // Empaquetar el frontend (los archivos de la carpeta 'build' generada por React)
                     // Comprime el contenido de la carpeta 'client/build'
-                    sh "tar -czvf sisconfig-frontend.tar.gz -C client/build ."
+                    bat "tar -czvf sisconfig-frontend.tar.gz -C client/build ."
                 }
             }
         }
@@ -118,32 +118,32 @@ pipeline {
                     echo "Preparando despliegue del backend en QA..."
                     sshagent(credentials: ["${env.SSH_CREDENTIAL_ID}"]) {
                         // Crear/limpiar directorio de la aplicación en QA
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.NODE_APP_DIR} && mkdir -p ${env.NODE_APP_DIR}'"
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.NODE_APP_DIR} && mkdir -p ${env.NODE_APP_DIR}'"
                         // Transferir el paquete del backend
-                        sh "scp -o StrictHostKeyChecking=no sisconfig-backend.tar.gz ${env.QA_SERVER_USER}@${env.QA_SERVER_IP}:${env.NODE_APP_DIR}/"
+                        bat "scp -o StrictHostKeyChecking=no sisconfig-backend.tar.gz ${env.QA_SERVER_USER}@${env.QA_SERVER_IP}:${env.NODE_APP_DIR}/"
                         // Descomprimir y limpiar en el servidor QA
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && tar -xzvf sisconfig-backend.tar.gz && rm sisconfig-backend.tar.gz'"
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && tar -xzvf sisconfig-backend.tar.gz && rm sisconfig-backend.tar.gz'"
                         // Instalar dependencias en el servidor QA (si no se empaquetaron directamente)
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && npm install --production'"
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && npm install --production'"
                         // Opcional: copiar variables de entorno (.env) si las usas y no están en Git
                         // sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cp /path/to/qa/backend/.env ${env.NODE_APP_DIR}/.env'"
                         // Iniciar/Reiniciar el backend con PM2
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && pm2 stop sisconfig-backend || true && pm2 start app.js --name sisconfig-backend || pm2 restart sisconfig-backend'"
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.NODE_APP_DIR} && pm2 stop sisconfig-backend || true && pm2 start app.js --name sisconfig-backend || pm2 restart sisconfig-backend'"
                     }
 
                     // === Despliegue del Frontend (React.js en Tomcat) ===
                     echo "Preparando despliegue del frontend en Tomcat en QA..."
                     sshagent(credentials: ["${env.SSH_CREDENTIAL_ID}"]) {
                         // Limpiar la aplicación antigua en Tomcat
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}/*'"
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'rm -rf ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}/*'"
                         // Crear la carpeta de la aplicación si no existe
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'mkdir -p ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}'"
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'mkdir -p ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}'"
                         // Transferir el paquete del frontend
-                        sh "scp -o StrictHostKeyChecking=no sisconfig-frontend.tar.gz ${env.QA_SERVER_USER}@${env.QA_SERVER_IP}:${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}/"
+                        bat "scp -o StrictHostKeyChecking=no sisconfig-frontend.tar.gz ${env.QA_SERVER_USER}@${env.QA_SERVER_IP}:${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME}/"
                         // Descomprimir y limpiar en el servidor QA
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME} && tar -xzvf sisconfig-frontend.tar.gz && rm sisconfig-frontend.tar.gz'"
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'cd ${env.TOMCAT_WEBAPPS_PATH}/${env.FRONTEND_APP_NAME} && tar -xzvf sisconfig-frontend.tar.gz && rm sisconfig-frontend.tar.gz'"
                         // Reiniciar Tomcat (esto asegura que Tomcat recargue la aplicación)
-                        sh "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'sudo systemctl restart tomcat'" // Asegúrate que el usuario tenga permisos para sudo sin password o usa otra forma de reiniciar
+                        bat "ssh -o StrictHostKeyChecking=no ${env.QA_SERVER_USER}@${env.QA_SERVER_IP} 'sudo systemctl restart tomcat'" // Asegúrate que el usuario tenga permisos para sudo sin password o usa otra forma de reiniciar
                     }
                 }
             }
