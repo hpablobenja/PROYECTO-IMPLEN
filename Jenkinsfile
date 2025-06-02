@@ -93,9 +93,11 @@ pipeline {
         stage('Frontend: Build for Production') {
     steps {
         dir('Frontend') {
-            echo 'Construyendo el frontend para producción...'
-            // Omite la actualización o hazla condicional
-            bat 'npm run build || exit 0'
+            // Desactiva temporalmente los checks de ESLint en CI
+            bat 'set CI=false && npm run build'
+            
+            // Verifica que se creó la carpeta build
+            bat 'if not exist "build" exit 1'
         }
     }
     post {
@@ -107,19 +109,17 @@ pipeline {
 }
 
         stage('Package Artifacts') {
-            steps {
-                script {
-                    echo 'Empaquetando artefactos para despliegue...'
-                    // Empaquetar el backend (Node.js)
-                    // Comprime todo el contenido de la carpeta 'server'
-                    bat "tar -czvf sisconfig-backend.tar.gz -C server ."
-                    // Empaquetar el frontend (los archivos de la carpeta 'build' generada por React)
-                    // Comprime el contenido de la carpeta 'client/build'
-                    bat "tar -czvf sisconfig-frontend.tar.gz -C client/build ."
-                }
-            }
+    steps {
+        script {
+            echo 'Empaquetando artefactos para despliegue...'
+            // Usa rutas correctas para Windows
+            bat '''
+                cd Backend && tar -czvf ../sisconfig-backend.tar.gz .
+                cd ../Frontend/build && tar -czvf ../../sisconfig-frontend.tar.gz .
+            '''
         }
-
+    }
+}
         stage('Deploy to QA') {
             steps {
                 script {
