@@ -145,7 +145,7 @@ pipeline {
                     // =======================================================================================
                     
                     echo "Iniciando/Reiniciando PM2 sisconfig-backend..."
-                    bat "cd /D \"${env.NODE_APP_DIR}\" && \"${env.PM2_PATH}\" start app.js --name sisconfig-backend"
+                    bat "cd /D \"${env.NODE_APP_DIR}\" && \"${env.PM2_PATH}\" start server.js --name sisconfig-backend"
 
 
                     // === Despliegue del Frontend (React.js en Tomcat local) ===
