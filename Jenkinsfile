@@ -17,7 +17,7 @@ pipeline {
         // pero las mantenemos para coherencia si en un futuro es un servidor remoto.
         QA_SERVER_IP = 'localhost' // O tu IP local, ej. '127.0.0.1'
         QA_SERVER_USER = 'tu_usuario_windows' // El usuario de Windows que ejecutará los comandos.
-                                              // Asegúrate que este usuario tenga permisos sobre las rutas de despliegue.
+                                             // Asegúrate que este usuario tenga permisos sobre las rutas de despliegue.
         // La credencial SSH ya no es directamente usada para comandos locales,
         // pero si usas el cliente OpenSSH para Windows, las claves pueden seguir siendo útiles.
         // Por ahora, para simplificar el despliegue LOCAL, la omitiremos en los comandos directos.
@@ -36,7 +36,6 @@ pipeline {
 
         stage('Backend: Install Dependencies') {
             steps {
-                // *** CAMBIO AQUÍ: 'server' ahora es 'Backend' ***
                 dir('Backend') {
                     echo 'Instalando dependencias del backend (Node.js)...'
                     bat 'npm install'
@@ -45,22 +44,21 @@ pipeline {
         }
 
         stage('Backend: Run Unit Tests') {
-    steps {
-        dir('Backend') {
-            echo 'Ejecutando pruebas unitarias del backend...'
-            bat 'npm test' // SIN EL '|| true'
+            steps {
+                dir('Backend') {
+                    echo 'Ejecutando pruebas unitarias del backend...'
+                    bat 'npm test'
+                }
+            }
+            post {
+                failure {
+                    echo '¡Pruebas unitarias del backend fallaron!'
+                }
+            }
         }
-    }
-    post {
-        failure {
-            echo '¡Pruebas unitarias del backend fallaron!'
-        }
-    }
-}
 
         stage('Frontend: Install Dependencies') {
             steps {
-                // *** CAMBIO AQUÍ: 'client' ahora es 'Frontend' ***
                 dir('Frontend') {
                     echo 'Instalando dependencias del frontend (React.js)...'
                     bat 'npm install'
@@ -69,21 +67,21 @@ pipeline {
         }
 
         stage('Frontend: Run Unit Tests') {
-    steps {
-        dir('Frontend') {
-            echo 'Ejecutando pruebas unitarias del frontend...'
-            bat 'npm test' // SIN EL '|| true'
+            steps {
+                dir('Frontend') {
+                    echo 'Ejecutando pruebas unitarias del frontend...'
+                    bat 'npm test'
+                }
+            }
+            post {
+                failure {
+                    echo '¡Pruebas unitarias del frontend fallaron!'
+                }
+            }
         }
-    }
-    post {
-        failure {
-            echo '¡Pruebas unitarias del frontend fallaron!'
-        }
-    }
-}
+
         stage('Frontend: Build for Production') {
             steps {
-                // *** CAMBIO AQUÍ: 'client' ahora es 'Frontend' ***
                 dir('Frontend') {
                     echo 'Construyendo el frontend para producción (npm run build)...'
                     bat 'npm run build' // Esto generará la carpeta 'build' dentro de 'Frontend'
@@ -96,10 +94,8 @@ pipeline {
                 script {
                     echo 'Empaquetando artefactos para despliegue...'
                     // Empaquetar el backend (Node.js)
-                    // *** CAMBIO AQUÍ: '-C server' ahora es '-C Backend' ***
                     bat "tar -czvf sisconfig-backend.tar.gz -C Backend ."
                     // Empaquetar el frontend (los archivos de la carpeta 'build' generada por React)
-                    // *** CAMBIO AQUÍ: '-C client\\build' ahora es '-C Frontend\\build' ***
                     bat "tar -czvf sisconfig-frontend.tar.gz -C Frontend\\build ."
                 }
             }
@@ -117,7 +113,13 @@ pipeline {
                     bat "tar -xzvf sisconfig-backend.tar.gz -C \"${env.NODE_APP_DIR}\""
                     bat "del sisconfig-backend.tar.gz"
                     bat "pushd \"${env.NODE_APP_DIR}\" && npm install --production && popd"
-                    bat "pm2 stop sisconfig-backend || true"
+                    
+                    // Detener PM2 y esperar un momento para asegurar que el proceso se libere
+                    echo "Deteniendo PM2 y esperando un momento..."
+                    bat "pm2 stop sisconfig-backend || true" // '|| true' evita que falle si no está corriendo
+                    bat "timeout /t 5 /nobreak" // Espera 5 segundos para que el proceso se termine
+                    
+                    echo "Iniciando/Reiniciando el backend con PM2..."
                     bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start app.js --name sisconfig-backend || pm2 restart sisconfig-backend"
 
 
@@ -137,6 +139,8 @@ pipeline {
             steps {
                 script {
                     echo 'Ejecutando pruebas E2E en QA local (simulado)...'
+                    // Aquí irían tus comandos para ejecutar las pruebas E2E, e.g.:
+                    // bat 'npm test --prefix Frontend/e2e'
                 }
             }
             post {
@@ -148,7 +152,7 @@ pipeline {
 
         stage('Manual Approval for Production (Example for main branch)') {
             when {
-                expression { false }
+                expression { false } // Cambia a 'true' si quieres habilitar la aprobación manual
             }
             steps {
                 input message: '¿Aprobar el despliegue a Producción?', submitter: 'admin, devops'
@@ -159,13 +163,19 @@ pipeline {
     post {
         always {
             echo 'Pipeline completado.'
-            cleanWs()
+            // Aplicando las sugerencias para cleanWs()
+            // deleteDirs: true -> Asegura que los directorios también se borren.
+            // disableDeferredWipeout: true -> Fuerza la eliminación inmediata.
+            // notFailBuild: true -> (Temporalmente) Permite que el pipeline no falle si la limpieza falla.
+            //                       Idealmente, una vez resuelto el problema de bloqueo, se debería quitar.
+            cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
         success {
             echo '¡El pipeline se ejecutó con éxito!'
         }
         failure {
             echo '¡El pipeline falló!'
+            // Puedes añadir acciones adicionales aquí en caso de fallo, como notificaciones
         }
     }
 }
