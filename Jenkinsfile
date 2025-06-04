@@ -113,11 +113,11 @@ pipeline {
                         echo "Advertencia: No se pudo detener PM2 sisconfig-backend (posiblemente no estaba corriendo). Error: ${err.message}"
                     }
 
-                    // *** CAMBIO AQUÍ: Usando 'sleep' de Jenkins Pipeline en lugar de 'timeout' ***
                     sleep 5 // Espera 5 segundos para que los procesos se liberen
                     
                     echo "Iniciando/Reiniciando el backend con PM2..."
-                    bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start app.js --name sisconfig-backend"
+                    // *** CAMBIO AQUÍ: Ahora se usa 'server.js' en lugar de 'app.js' ***
+                    bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start server.js --name sisconfig-backend" 
 
 
                     // === Despliegue del Frontend (React.js en Tomcat local) ===
