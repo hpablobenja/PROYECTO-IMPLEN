@@ -12,8 +12,7 @@ pipeline {
 
         // Configura PM2_HOME para que PM2 sepa dónde guardar sus archivos en Windows
         // Esto resolverá: "[PM2][Initialization] Environment variable HOME (Linux) or HOMEPATH (Windows) are not set!"
-        PM2_HOME = 'C:\\Users\\your_jenkins_user\\.pm2' // O una ruta similar, asegúrate de que exista y Jenkins tenga permisos.
-                                                        // Podría ser también en C:\ProgramData\Jenkins\.jenkins\.pm2
+        PM2_HOME = 'C:\\Users\\your_jenkins_user\\.pm2' // O una ruta similar. ¡AJUSTA ESTA RUTA!
                                                         // Asegúrate que el usuario de servicio de Jenkins tenga permisos en esta ruta.
 
         QA_SERVER_IP = 'localhost'
@@ -107,11 +106,6 @@ pipeline {
                     bat "pushd \"${env.NODE_APP_DIR}\" && npm install --production && popd"
                     
                     echo "Intentando detener PM2 y esperando un momento..."
-                    // Para Windows, no uses '|| true'. PM2 ya devuelve un error si el proceso no existe.
-                    // Si el comando falla, Jenkins por defecto marca la etapa como fallida.
-                    // Podemos manejarlo usando 'try-catch' en Groovy si realmente quieres que no falle
-                    // o aceptar el error de PM2 si el proceso no está corriendo, ya que el siguiente
-                    // 'pm2 start || pm2 restart' lo gestionará.
                     try {
                         bat "pm2 stop sisconfig-backend"
                         echo "PM2 sisconfig-backend detenido (si estaba corriendo)."
@@ -119,11 +113,10 @@ pipeline {
                         echo "Advertencia: No se pudo detener PM2 sisconfig-backend (posiblemente no estaba corriendo). Error: ${err.message}"
                     }
 
-                    // Aún mantenemos el timeout para dar tiempo a liberar recursos
-                    bat "timeout /t 5 /nobreak"
+                    // *** CAMBIO AQUÍ: Usando 'sleep' de Jenkins Pipeline en lugar de 'timeout' ***
+                    sleep 5 // Espera 5 segundos para que los procesos se liberen
                     
                     echo "Iniciando/Reiniciando el backend con PM2..."
-                    // pm2 start ... || pm2 restart ... ya maneja si el proceso existe o no.
                     bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start app.js --name sisconfig-backend"
 
 
@@ -165,7 +158,6 @@ pipeline {
     post {
         always {
             echo 'Pipeline completado.'
-            // Manteniendo los parámetros para cleanWs()
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
         success {
