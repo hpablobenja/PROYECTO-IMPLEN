@@ -17,20 +17,12 @@ pipeline {
         // pero las mantenemos para coherencia si en un futuro es un servidor remoto.
         QA_SERVER_IP = 'localhost' // O tu IP local, ej. '127.0.0.1'
         QA_SERVER_USER = 'tu_usuario_windows' // El usuario de Windows que ejecutará los comandos.
-                                              // Asegúrate que este usuario tenga permisos sobre las rutas de despliegue.
+                                             // Asegúrate que este usuario tenga permisos sobre las rutas de despliegue.
         // La credencial SSH ya no es directamente usada para comandos locales,
         // pero si usas el cliente OpenSSH para Windows, las claves pueden seguir siendo útiles.
         // Por ahora, para simplificar el despliegue LOCAL, la omitiremos en los comandos directos.
         // Si necesitas autenticación para SSH local (ej. para PM2 con SSH), deberás revisarlo.
         SSH_CREDENTIAL_ID = 'your-ssh-credential-id' // ID de tu credencial SSH, mantenlo por si acaso.
-        //    ¡DEBES REEMPLAZAR EL VALOR A CONTINUACIÓN CON LA RUTA REAL QUE ENCUENTRES!
-        PM2_PATH = 'C:\\Users\\BENJAMIN\\AppData\\Roaming\\npm\\pm2.cmd'
-
-        // 2. PM2_HOME: La carpeta donde PM2 guardará sus configuraciones, logs, etc.
-        //    ¡CREA ESTA CARPETA MANUALMENTE SI NO EXISTE!
-        //    Ejemplo: 'C:\\Users\\tu_usuario\\.pm2' o 'C:\\PM2_DATA'
-        //    ¡DEBES REEMPLAZAR EL VALOR A CONTINUACIÓN Y CREAR LA CARPETA!
-        PM2_HOME = 'C:\\Users\\BENJAMIN\\.pm2'
     }
 
     stages {
@@ -44,7 +36,6 @@ pipeline {
 
         stage('Backend: Install Dependencies') {
             steps {
-                // *** CAMBIO AQUÍ: 'server' ahora es 'Backend' ***
                 dir('Backend') {
                     echo 'Instalando dependencias del backend (Node.js)...'
                     bat 'npm install'
@@ -52,26 +43,22 @@ pipeline {
             }
         }
 
-     stage('Backend: Run Unit Tests') {
+        stage('Backend: Run Unit Tests') {
             steps {
-                script {
-                    echo 'Ejecutando pruebas unitarias del backend'
-                    // bat 'npm test' // Comentar esta línea para saltar la ejecución real
+                dir('Backend') {
+                    echo 'Ejecutando pruebas unitarias del backend...'
+                    bat 'npm test'
                 }
             }
             post {
-                success { // Cambiar a success para que no falle si la ejecutas sin el bat
-                    echo 'Pruebas unitarias del backend con éxito.'
-                }
-                failure { // Mantener esto por si el comando se descomenta y falla
+                failure {
                     echo '¡Pruebas unitarias del backend fallaron!'
                 }
             }
-}
+        }
 
         stage('Frontend: Install Dependencies') {
             steps {
-                // *** CAMBIO AQUÍ: 'client' ahora es 'Frontend' ***
                 dir('Frontend') {
                     echo 'Instalando dependencias del frontend (React.js)...'
                     bat 'npm install'
@@ -81,23 +68,20 @@ pipeline {
 
         stage('Frontend: Run Unit Tests') {
             steps {
-                script {
-                    echo 'Ejecutando pruebas unitarias del frontend '
-                    // bat 'npm test' // Comentar esta línea para saltar la ejecución real
+                dir('Frontend') {
+                    echo 'Ejecutando pruebas unitarias del frontend...'
+                    bat 'npm test'
                 }
             }
             post {
-                success { // Cambiar a success para que no falle si la ejecutas sin el bat
-                    echo 'Pruebas unitarias del frontend con éxito.'
-                }
-                failure { // Mantener esto por si el comando se descomenta y falla
+                failure {
                     echo '¡Pruebas unitarias del frontend fallaron!'
                 }
             }
-}
+        }
+
         stage('Frontend: Build for Production') {
             steps {
-                // *** CAMBIO AQUÍ: 'client' ahora es 'Frontend' ***
                 dir('Frontend') {
                     echo 'Construyendo el frontend para producción (npm run build)...'
                     bat 'npm run build' // Esto generará la carpeta 'build' dentro de 'Frontend'
@@ -110,56 +94,33 @@ pipeline {
                 script {
                     echo 'Empaquetando artefactos para despliegue...'
                     // Empaquetar el backend (Node.js)
-                    // *** CAMBIO AQUÍ: '-C server' ahora es '-C Backend' ***
                     bat "tar -czvf sisconfig-backend.tar.gz -C Backend ."
                     // Empaquetar el frontend (los archivos de la carpeta 'build' generada por React)
-                    // *** CAMBIO AQUÍ: '-C client\\build' ahora es '-C Frontend\\build' ***
                     bat "tar -czvf sisconfig-frontend.tar.gz -C Frontend\\build ."
                 }
             }
         }
 
-                stage('Deploy to QA') {
+        stage('Deploy to QA') {
             steps {
                 script {
                     echo 'Desplegando SISCONFIG a QA (Local)...'
 
                     // === Despliegue del Backend (Node.js) ===
                     echo "Preparando despliegue del backend en QA local..."
-
-                    // 1. PRIMERO: Detener y eliminar el proceso PM2 existente.
-                    //    Esto libera los archivos en C:\QA\sisconfig-backend.
-                    echo "Intentando detener y eliminar proceso PM2 existente si existe..."
-                    // Intentamos detenerlo limpiamente; '|| exit 0' para que no falle si no está corriendo.
-                    bat "\"${env.PM2_PATH}\" stop sisconfig-backend || exit 0"
-                    // Luego intentamos eliminarlo de la lista de PM2; '|| exit 0' para que no falle si no existe.
-                    bat "\"${env.PM2_PATH}\" delete sisconfig-backend || exit 0"
-
-                    // Opcional: Pequeña pausa para asegurar que el sistema operativo libere los archivos.
-                    // Solo si el error persiste después del reordenamiento.
-                    // bat "timeout /T 5 /NOBREAK" // Pausa de 5 segundos (solo en Windows)
-
-                    // 2. SEGUNDO: Ahora sí, eliminar el directorio de despliegue anterior.
-                    //    Como el proceso PM2 ya se intentó detener, la carpeta debería estar liberada.
-                    echo "Eliminando directorio de despliegue anterior: ${env.NODE_APP_DIR}"
                     bat "if exist \"${env.NODE_APP_DIR}\" rmdir /s /q \"${env.NODE_APP_DIR}\""
-
-                    // 3. TERCERO: Crear el nuevo directorio de despliegue.
-                    echo "Creando nuevo directorio de despliegue: ${env.NODE_APP_DIR}"
                     bat "mkdir \"${env.NODE_APP_DIR}\""
-
-                    // 4. CUARTO: Extraer el nuevo código en el directorio limpio.
-                    echo "Extrayendo nuevo código..."
                     bat "tar -xzvf sisconfig-backend.tar.gz -C \"${env.NODE_APP_DIR}\""
                     bat "del sisconfig-backend.tar.gz"
-
-                    // 5. QUINTO: Instalar las dependencias de producción en el nuevo código.
-                    echo "Instalando dependencias de producción..."
                     bat "pushd \"${env.NODE_APP_DIR}\" && npm install --production && popd"
-
-                    // 6. SEXTO: Iniciar la nueva versión del backend con PM2.
-                    echo "Iniciando PM2 sisconfig-backend..."
-                    bat "cd /D \"${env.NODE_APP_DIR}\" && \"${env.PM2_PATH}\" start server.js --name sisconfig-backend"
+                    
+                    // Detener PM2 y esperar un momento para asegurar que el proceso se libere
+                    echo "Deteniendo PM2 y esperando un momento..."
+                    bat "pm2 stop sisconfig-backend || true" // '|| true' evita que falle si no está corriendo
+                    bat "timeout /t 5 /nobreak" // Espera 5 segundos para que el proceso se termine
+                    
+                    echo "Iniciando/Reiniciando el backend con PM2..."
+                    bat "cd /D \"${env.NODE_APP_DIR}\" && pm2 start app.js --name sisconfig-backend || pm2 restart sisconfig-backend"
 
 
                     // === Despliegue del Frontend (React.js en Tomcat local) ===
@@ -170,13 +131,16 @@ pipeline {
                     bat "del sisconfig-frontend.tar.gz"
 
                     echo "¡ATENCIÓN! Reinicio de Tomcat manual o con permisos de administrador. Verifica que tu Tomcat se recargue al detectar cambios en webapps o reinícialo manualmente para probar."
+                }
             }
         }
-}
+
         stage('Run E2E Tests (Optional but Recommended)') {
             steps {
                 script {
                     echo 'Ejecutando pruebas E2E en QA local (simulado)...'
+                    // Aquí irían tus comandos para ejecutar las pruebas E2E, e.g.:
+                    // bat 'npm test --prefix Frontend/e2e'
                 }
             }
             post {
@@ -188,7 +152,7 @@ pipeline {
 
         stage('Manual Approval for Production (Example for main branch)') {
             when {
-                expression { false }
+                expression { false } // Cambia a 'true' si quieres habilitar la aprobación manual
             }
             steps {
                 input message: '¿Aprobar el despliegue a Producción?', submitter: 'admin, devops'
@@ -199,13 +163,19 @@ pipeline {
     post {
         always {
             echo 'Pipeline completado.'
-            cleanWs()
+            // Aplicando las sugerencias para cleanWs()
+            // deleteDirs: true -> Asegura que los directorios también se borren.
+            // disableDeferredWipeout: true -> Fuerza la eliminación inmediata.
+            // notFailBuild: true -> (Temporalmente) Permite que el pipeline no falle si la limpieza falla.
+            //                       Idealmente, una vez resuelto el problema de bloqueo, se debería quitar.
+            cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
         success {
             echo '¡El pipeline se ejecutó con éxito!'
         }
         failure {
             echo '¡El pipeline falló!'
+            // Puedes añadir acciones adicionales aquí en caso de fallo, como notificaciones
         }
     }
 }
